@@ -116,7 +116,13 @@ def call_command(command_name, *args, **options):
         for s_opt in parser._actions if s_opt.option_strings
     }
     arg_options = {opt_mapping.get(key, key): value for key, value in options.items()}
-    defaults = parser.parse_args(args=[str(a) for a in args])
+    # Catch any required parameters which could be passed in via **options
+    missing_required_opt = [r for r in parser._actions
+                            if r.required and r.dest in options.keys()]
+    parse_args = [str(a) for a in args]
+    parse_args += ["{}={}".format(min(r.option_strings), arg_options[r.dest])
+                   for r in missing_required_opt]
+    defaults = parser.parse_args(args=parse_args)
     defaults = dict(defaults._get_kwargs(), **arg_options)
     # Raise an error if any unknown options were passed.
     stealth_options = set(command.base_stealth_options + command.stealth_options)

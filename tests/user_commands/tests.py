@@ -194,6 +194,22 @@ class CommandTests(SimpleTestCase):
         with self.assertRaisesMessage(TypeError, msg):
             management.call_command('dance', unrecognized=1, unrecognized2=1)
 
+    def test_call_command_with_required_parameters(self):
+        """ Verify that all variations of required option passing produce the same result"""
+        out = StringIO()
+        management.call_command('required_option',  "--need-me=asdf",
+                                "--need-me-too=fdsa", example='ex', verbosity=2, stdout=out)
+        out2 = StringIO()
+        management.call_command('required_option', need_me="asdf", needme2="fdsa",
+                                example="ex", verbosity=2, stdout=out2)
+        out3 = StringIO()
+        management.call_command('required_option', "--need-me=asdf", needme2="fdsa",
+                                example="ex", verbosity=2, stdout=out3)
+        self.assertIn("need_me", out.getvalue())
+        self.assertIn("needme2", out.getvalue())
+        self.assertEqual(out.getvalue(), out2.getvalue())
+        self.assertEqual(out2.getvalue(), out3.getvalue())
+
 
 class CommandRunTests(AdminScriptTestCase):
     """
